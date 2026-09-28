@@ -12,6 +12,11 @@ jalankan() {
   ada_cek=1
 }
 
+# Struktur folder sesuai ARSITEKTUR.md
+if [[ -x scripts/cek-struktur.sh ]]; then
+  jalankan scripts/cek-struktur.sh
+fi
+
 # Node.js
 if [[ -f package.json ]]; then
   if grep -q '"lint"[[:space:]]*:' package.json; then
