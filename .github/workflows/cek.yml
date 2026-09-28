@@ -1,0 +1,25 @@
+# Jalankan scripts/cek.sh (struktur + lint + tes) di setiap PR dan push ke main.
+# Rename/hapus file ditolak, kecuali manusia memberi label "ubah-struktur" pada PR.
+name: cek
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  cek:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Cek
+        env:
+          CEK_STRUKTUR_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || 'HEAD' }}
+          IZINKAN_UBAH_STRUKTUR: ${{ contains(github.event.pull_request.labels.*.name, 'ubah-struktur') && '1' || '0' }}
+        run: ./scripts/cek.sh
