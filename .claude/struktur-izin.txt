@@ -1,0 +1,48 @@
+# Pola lokasi file yang boleh ada di repo. Satu pola per baris.
+#   *   = apa saja kecuali "/" (tidak masuk subfolder)
+#   **  = apa saja termasuk "/" (boleh subfolder)
+#   ?   = satu karakter kecuali "/"
+# Hanya manusia yang boleh mengubah file ini. Penjelasan: ARSITEKTUR.md
+
+# Dokumen dan konfigurasi di akar
+CLAUDE.md
+ARSITEKTUR.md
+PANDUAN.md
+README.md
+LICENSE
+.gitignore
+.env.example
+.editorconfig
+
+# Manifest dan konfigurasi stack (akar)
+package.json
+package-lock.json
+tsconfig*.json
+eslint.config.*
+.prettierrc*
+pyproject.toml
+requirements*.txt
+go.mod
+go.sum
+Cargo.toml
+Cargo.lock
+composer.json
+composer.lock
+
+# Kode aplikasi
+src/*
+src/agent/**
+src/tools/*
+src/prompts/**
+src/config/*
+
+# Tes
+tests/**
+
+# Pendukung
+scripts/*
+deploy/*
+.claude/settings.json
+.claude/struktur-izin.txt
+.claude/hooks/*
+.github/workflows/*

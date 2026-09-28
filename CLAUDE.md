@@ -9,6 +9,13 @@ Tujuan utama: perubahan kecil, teruji, dan mudah dibatalkan. Kode tidak boleh ru
 4. Setelah mengubah kode, jalankan `./scripts/cek.sh`. Perbaiki sampai lulus.
 5. Commit kecil dengan pesan jelas setiap satu langkah selesai dan cek lulus.
 
+## Struktur kode
+- Baca `ARSITEKTUR.md` sebelum menambah file. File baru harus berada di lokasi yang sesuai pola.
+- Jangan memindahkan, mengganti nama, atau menghapus file/folder yang sudah ada tanpa izin.
+- Jangan membuat folder tingkat atas baru.
+- Jangan mengubah `.claude/struktur-izin.txt`. Perubahan pola adalah keputusan manusia.
+- Kalau fitur tidak cocok ke folder mana pun, berhenti dan tanya.
+
 ## Larangan
 - Jangan menghapus, melewati, atau melemahkan tes supaya cek lulus. Perbaiki kodenya.
 - Jangan `git push --force`, `git reset --hard`, atau `rm -rf`.
