@@ -1,0 +1,12 @@
+# Contoh timer untuk tugas berulang (mis. "perbaiki tes yang gagal").
+# Tugas sekali jalan cukup: scripts/agent-vps.sh "tugas".
+#   sudo systemctl enable --now claude-agent.timer
+[Unit]
+Description=Jadwal claude-agent
+
+[Timer]
+OnCalendar=*-*-* 02:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

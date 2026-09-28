@@ -1,0 +1,24 @@
+# Contoh unit systemd untuk menjalankan scripts/agent-vps.sh.
+# Salin ke /etc/systemd/system/, sesuaikan path, lalu:
+#   sudo systemctl daemon-reload
+#   sudo systemctl start claude-agent        # jalankan sekali
+#   journalctl -u claude-agent -f            # lihat log
+[Unit]
+Description=Claude Code agent (headless) untuk repo ini
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=claude-agent
+WorkingDirectory=/home/claude-agent/repo
+# Berisi ANTHROPIC_API_KEY=... (dan GH_TOKEN=... kalau pakai gh). chmod 600, milik root.
+EnvironmentFile=/etc/claude-agent.env
+ExecStart=/home/claude-agent/repo/scripts/agent-vps.sh -f /home/claude-agent/tugas.txt
+TimeoutStartSec=1h
+
+# Batasi apa yang bisa disentuh proses ini.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/home/claude-agent

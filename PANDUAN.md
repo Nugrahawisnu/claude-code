@@ -59,3 +59,54 @@ Buat `.claude/settings.local.json` (tidak ikut di-commit) untuk pengaturan priba
 ```
 
 Hapus lagi setelah selesai.
+
+## Menjaga struktur kode
+
+Menambah file boleh, asal lokasinya sesuai `ARSITEKTUR.md`. Empat lapis pengaman:
+
+| Lapis | File | Kapan bekerja |
+|---|---|---|
+| Aturan | `ARSITEKTUR.md`, `CLAUDE.md` | Dibaca Claude setiap sesi. |
+| Hook | `.claude/hooks/tolak-file-luar-pola.sh` | Saat Claude membuat file baru di lokasi yang tidak sesuai pola: langsung ditolak. |
+| Cek | `scripts/cek-struktur.sh` (dipanggil `scripts/cek.sh`) | Menolak file di luar pola, rename/hapus file, dan perubahan daftar pola. |
+| Review | `.github/workflows/cek.yml` + proteksi `main` | Setiap PR. |
+
+Pola lokasi ada di `.claude/struktur-izin.txt`. Hanya Anda yang mengubahnya. Kalau rename atau
+hapus file memang disetujui: jalankan `IZINKAN_UBAH_STRUKTUR=1 ./scripts/cek.sh` secara lokal,
+dan beri label `ubah-struktur` pada PR supaya CI mengizinkan.
+
+## Menjalankan Claude Code di VPS
+
+`scripts/agent-vps.sh` menjalankan Claude Code tanpa pengawasan dengan alur tetap: branch baru
+`agent/...` dari `origin/main` → `claude -p` → `scripts/cek.sh` → commit → push → buka PR. Tidak
+pernah push atau merge ke `main`. Kalau cek gagal, perubahan disimpan di branch lokal dan tidak
+di-push. Log ada di `~/.claude-agent/log/`.
+
+Persiapan sekali (sebagai root):
+
+```bash
+adduser --disabled-password claude-agent          # user khusus, bukan root
+npm install -g @anthropic-ai/claude-code          # perlu Node.js
+install -m 600 /dev/null /etc/claude-agent.env    # isi: ANTHROPIC_API_KEY=... (dan GH_TOKEN=... untuk gh)
+```
+
+Sebagai `claude-agent`:
+
+```bash
+git clone git@github.com:NAMA/REPO.git ~/repo     # pakai deploy key khusus repo ini
+git -C ~/repo config user.name "claude-agent"
+git -C ~/repo config user.email "claude-agent@localhost"
+cd ~/repo && scripts/agent-vps.sh "Tambahkan tool cuaca beserta tesnya"
+```
+
+Untuk tugas berulang, pakai contoh `deploy/claude-agent.service` dan `deploy/claude-agent.timer`
+(tugas dibaca dari `~/tugas.txt`).
+
+Wajib di GitHub (Settings → Rules → Rulesets untuk `main`): wajib lewat PR, wajib CI `cek`
+lulus, wajib 1 approval, blokir force-push. Ini pengaman terakhir kalau semua lapis lain lolos.
+
+Catatan keamanan:
+- Jangan pakai `--dangerously-skip-permissions`. Mode headless tetap memakai `.claude/settings.json`
+  dan hook, jadi perintah di luar daftar izin otomatis ditolak.
+- Aplikasi agent yang sudah jadi di-deploy dari `main` saja, di folder terpisah dari `~/repo`
+  tempat Claude Code bekerja.
