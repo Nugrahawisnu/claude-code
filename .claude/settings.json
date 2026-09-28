@@ -15,7 +15,9 @@
       "Bash(git reset --hard:*)",
       "Bash(git clean -f:*)",
       "Read(./.env)",
-      "Read(./.env.*)"
+      "Read(./.env.*)",
+      "Edit(./.claude/struktur-izin.txt)",
+      "Write(./.claude/struktur-izin.txt)"
     ]
   },
   "hooks": {
@@ -26,6 +28,15 @@
           {
             "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/tolak-edit-main.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/tolak-file-luar-pola.sh"
           }
         ]
       }
