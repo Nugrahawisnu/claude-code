@@ -1,0 +1,19 @@
+[project]
+name = "tiktok-potong"
+version = "0.1.0"
+description = "Potong otomatis bagian depan & belakang video lalu ubah ke format TikTok (9:16)."
+requires-python = ">=3.9"
+dependencies = []
+
+[project.scripts]
+tiktok-potong = "tiktok_potong:main"
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
