@@ -19,3 +19,8 @@ hasil/
 *.mov
 *.mkv
 *.webm
+
+# tiktok_upload: data lokal per pengguna
+riwayat_upload.json
+lembar_posting.md
+daftar_upload.csv

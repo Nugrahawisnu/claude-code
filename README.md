@@ -1,5 +1,9 @@
 # tiktok-potong
 
+Dua alat:
+1. `tiktok_potong.py`: potong depan/belakang + format 9:16.
+2. `tiktok_upload.py`: kirim ke inbox TikTok sebagai draf + lembar posting keranjang kuning.
+
 Potong otomatis bagian depan & belakang video, lalu ubah ke format TikTok
 (1080x1920, 9:16, latar blur). Tidak perlu library Python tambahan, hanya
 **Python 3.9+** dan **ffmpeg**.
@@ -45,6 +49,64 @@ Kalau detik tetap dan hening sama-sama dipakai, diambil potongan yang
 
 Tips: kalau suara latar (kipas, AC) membuat hening tidak terdeteksi, naikkan
 ambangnya, misal `--ambang-db -30`.
+
+## Upload ke TikTok + keranjang kuning (`tiktok_upload.py`)
+
+API resmi TikTok **tidak bisa memasang keranjang kuning**. Jadi alurnya:
+video dikirim ke **kotak masuk (inbox) TikTok sebagai draf**, lalu Anda
+pasang produk dan posting di aplikasi. Tool ini juga membuat
+`lembar_posting.md` berisi caption + nama produk tiap video supaya cepat.
+
+### Persiapan (sekali saja)
+1. Buka [developers.tiktok.com](https://developers.tiktok.com), login, buat app
+   (platform **Desktop**).
+2. Tambahkan produk **Login Kit** dan **Content Posting API**, aktifkan scope
+   `video.upload`.
+3. Di Login Kit, daftarkan Redirect URI: `http://localhost:8585/callback/`
+4. Salin **Client key** dan **Client secret**, lalu set di terminal:
+   ```bash
+   export TIKTOK_CLIENT_KEY="..."      # Windows: set TIKTOK_CLIENT_KEY=...
+   export TIKTOK_CLIENT_SECRET="..."
+   ```
+5. Login akun TikTok (browser akan terbuka):
+   ```bash
+   python3 tiktok_upload.py login
+   ```
+   Kalau browser tidak bisa kembali ke localhost, pakai `login --tempel` lalu
+   tempel URL dari address bar.
+
+Selama app belum lolos review TikTok, upload hanya berfungsi untuk akun yang
+terdaftar sebagai tester/pemilik app. Itu cukup untuk akun sendiri.
+
+### Pemakaian harian
+```bash
+# 1. Potong & format
+python3 tiktok_potong.py mentah/ -o hasil/
+
+# 2. (Opsional) buat daftar caption/produk, lalu isi di Excel/Sheets
+python3 tiktok_upload.py templat hasil/
+
+# 3. Kirim ke inbox TikTok
+python3 tiktok_upload.py kirim hasil/
+```
+
+Isi `daftar_upload.csv`:
+
+| video | caption | hashtag | produk |
+|---|---|---|---|
+| sepatu_tiktok.mp4 | Empuk banget buat lari! | #racuntiktok #fyp | Sepatu Lari X |
+
+Lalu di HP: buka **notifikasi TikTok** → ketuk draf → Berikutnya →
+**Tambah link → Produk** → pilih dari etalase → tempel caption dari
+`lembar_posting.md` → **Posting**.
+
+Catatan:
+- Video yang sudah terkirim dicatat di `riwayat_upload.json` dan dilewati.
+  Pakai `--ulang` untuk mengirim lagi.
+- TikTok membatasi draf yang menunggu (sekitar 5 per 24 jam). Posting draf
+  yang ada dulu sebelum mengirim lagi.
+- `kirim --coba` untuk melihat rencana tanpa mengirim.
+- Token login disimpan di `~/.config/tiktok_potong/token.json` (di luar repo).
 
 ## Pengembangan
 ```bash
