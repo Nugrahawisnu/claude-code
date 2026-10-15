@@ -9,10 +9,17 @@ Hasilnya diubah ke 1080x1920 (9:16) dengan latar blur.
 
 from __future__ import annotations
 
+import argparse
 import re
+import shutil
+import subprocess
+import sys
+from pathlib import Path
 
 LEBAR, TINGGI = 1080, 1920
 DURASI_MINIMAL = 1.0
+BATAS_TIKTOK = 10 * 60
+EKSTENSI_VIDEO = {".mp4", ".mov", ".mkv", ".avi", ".webm", ".m4v"}
 
 _POLA_MULAI = re.compile(r"silence_start:\s*(-?[\d.]+)")
 _POLA_SELESAI = re.compile(r"silence_end:\s*(-?[\d.]+)")
@@ -107,3 +114,108 @@ def bangun_perintah_ffmpeg(
         keluar,
     ]
     return perintah
+
+
+def durasi(path: Path) -> float:
+    """Durasi video dalam detik (via ffprobe)."""
+    hasil = subprocess.run(
+        ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+         "-of", "default=noprint_wrappers=1:nokey=1", str(path)],
+        capture_output=True, text=True, check=True,
+    )
+    return float(hasil.stdout.strip())
+
+
+def cari_hening(path: Path, ambang_db: float = -35, min_hening: float = 0.5):
+    """Jalankan silencedetect; video tanpa audio menghasilkan daftar kosong."""
+    hasil = subprocess.run(
+        ["ffmpeg", "-hide_banner", "-nostats", "-i", str(path), "-vn",
+         "-af", f"silencedetect=noise={ambang_db}dB:d={min_hening}", "-f", "null", "-"],
+        capture_output=True, text=True,
+    )
+    if hasil.returncode != 0:
+        return []
+    return parse_hening(hasil.stderr)
+
+
+def kumpulkan_video(masukan: Path) -> list[Path]:
+    if masukan.is_dir():
+        return sorted(
+            p for p in masukan.iterdir()
+            if p.suffix.lower() in EKSTENSI_VIDEO and not p.stem.endswith("_tiktok")
+        )
+    return [masukan]
+
+
+def proses(path: Path, folder_keluar: Path, args: argparse.Namespace) -> Path:
+    total = durasi(path)
+    hening = cari_hening(path, args.ambang_db, args.min_hening) if args.hening else []
+    mulai, selesai = hitung_potongan(total, hening, args.awal, args.akhir)
+    keluar = folder_keluar / f"{path.stem}_tiktok.mp4"
+    perintah = bangun_perintah_ffmpeg(
+        str(path), str(keluar), mulai, selesai, not args.tanpa_format
+    )
+
+    print(f"• {path.name}: {total:.2f} dtk → potong {mulai:.2f}–{selesai:.2f} "
+          f"({selesai - mulai:.2f} dtk)")
+    if selesai - mulai > BATAS_TIKTOK:
+        print("  ⚠ Hasil lebih dari 10 menit, melebihi batas unggah TikTok.")
+    if args.coba:
+        print("  " + " ".join(perintah))
+    else:
+        subprocess.run(perintah, check=True)
+        print(f"  ✔ {keluar}")
+    return keluar
+
+
+def buat_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(
+        description="Potong otomatis depan & belakang video lalu ubah ke format TikTok 9:16.",
+    )
+    p.add_argument("masukan", type=Path, help="file video atau folder berisi video")
+    p.add_argument("-o", "--keluar", type=Path, default=Path("hasil"),
+                   help="folder hasil (default: hasil/)")
+    p.add_argument("--awal", type=float, default=0.0, help="detik yang dibuang di depan")
+    p.add_argument("--akhir", type=float, default=0.0, help="detik yang dibuang di belakang")
+    p.add_argument("--hening", action=argparse.BooleanOptionalAction, default=True,
+                   help="buang hening di awal & akhir (default: aktif)")
+    p.add_argument("--ambang-db", type=float, default=-35,
+                   help="batas suara dianggap hening, dalam dB (default: -35)")
+    p.add_argument("--min-hening", type=float, default=0.5,
+                   help="panjang hening minimal, detik (default: 0.5)")
+    p.add_argument("--tanpa-format", action="store_true",
+                   help="hanya potong, jangan ubah ke 9:16")
+    p.add_argument("--coba", action="store_true",
+                   help="tampilkan rencana potongan tanpa membuat file")
+    return p
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = buat_parser().parse_args(argv)
+    for alat in ("ffmpeg", "ffprobe"):
+        if shutil.which(alat) is None:
+            print(f"✘ {alat} tidak ditemukan. Pasang ffmpeg dulu.", file=sys.stderr)
+            return 2
+    if not args.masukan.exists():
+        print(f"✘ {args.masukan} tidak ada.", file=sys.stderr)
+        return 2
+
+    daftar = kumpulkan_video(args.masukan)
+    if not daftar:
+        print(f"✘ Tidak ada video di {args.masukan}.", file=sys.stderr)
+        return 2
+    if not args.coba:
+        args.keluar.mkdir(parents=True, exist_ok=True)
+
+    gagal = 0
+    for path in daftar:
+        try:
+            proses(path, args.keluar, args)
+        except (ValueError, subprocess.CalledProcessError) as e:
+            gagal += 1
+            print(f"  ✘ {path.name}: {e}", file=sys.stderr)
+    return 1 if gagal else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

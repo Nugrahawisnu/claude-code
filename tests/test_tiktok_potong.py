@@ -1,6 +1,16 @@
+import json
+import shutil
+import subprocess
+
 import pytest
 
-from tiktok_potong import bangun_perintah_ffmpeg, hitung_potongan, parse_hening
+from tiktok_potong import (
+    bangun_perintah_ffmpeg,
+    hitung_potongan,
+    kumpulkan_video,
+    main,
+    parse_hening,
+)
 
 CONTOH_STDERR = """\
 [silencedetect @ 0x1] silence_start: -0.0213
@@ -61,3 +71,59 @@ def test_perintah_format_tiktok():
 def test_perintah_tanpa_format():
     cmd = bangun_perintah_ffmpeg("a.mp4", "b.mp4", 0, 5, format_tiktok=False)
     assert "-filter_complex" not in cmd
+
+
+butuh_ffmpeg = pytest.mark.skipif(
+    shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None,
+    reason="ffmpeg tidak terpasang",
+)
+
+
+def _probe(path):
+    out = subprocess.run(
+        ["ffprobe", "-v", "error", "-select_streams", "v:0",
+         "-show_entries", "stream=width,height:format=duration", "-of", "json", str(path)],
+        capture_output=True, text=True, check=True,
+    ).stdout
+    data = json.loads(out)
+    s = data["streams"][0]
+    return s["width"], s["height"], float(data["format"]["duration"])
+
+
+@butuh_ffmpeg
+def test_integrasi_hening_dan_format(tmp_path):
+    # Video landscape 6 dtk: hening 1 dtk di awal & akhir, nada di tengah.
+    sumber = tmp_path / "uji.mp4"
+    subprocess.run(
+        ["ffmpeg", "-v", "error", "-y",
+         "-f", "lavfi", "-i", "testsrc=size=640x360:rate=30:duration=6",
+         "-f", "lavfi", "-i", "sine=frequency=440:duration=6",
+         "-af", "volume=enable='lt(t,1)+gt(t,5)':volume=0",
+         "-c:v", "libx264", "-c:a", "aac", "-shortest", str(sumber)],
+        check=True,
+    )
+    keluar = tmp_path / "hasil"
+    assert main([str(sumber), "-o", str(keluar)]) == 0
+
+    lebar, tinggi, dur = _probe(keluar / "uji_tiktok.mp4")
+    assert (lebar, tinggi) == (1080, 1920)
+    assert dur == pytest.approx(4.0, abs=0.25)
+
+
+@butuh_ffmpeg
+def test_integrasi_coba_tidak_membuat_file(tmp_path):
+    sumber = tmp_path / "uji.mp4"
+    subprocess.run(
+        ["ffmpeg", "-v", "error", "-y", "-f", "lavfi",
+         "-i", "testsrc=size=320x240:rate=30:duration=4", str(sumber)],
+        check=True,
+    )
+    keluar = tmp_path / "hasil"
+    assert main([str(sumber), "-o", str(keluar), "--awal", "1", "--coba"]) == 0
+    assert not keluar.exists()
+
+
+def test_kumpulkan_video_lewati_hasil(tmp_path):
+    for nama in ["a.mp4", "b.MOV", "a_tiktok.mp4", "catatan.txt"]:
+        (tmp_path / nama).touch()
+    assert [p.name for p in kumpulkan_video(tmp_path)] == ["a.mp4", "b.MOV"]
