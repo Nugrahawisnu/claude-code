@@ -12,3 +12,10 @@ target/
 
 # Setting pribadi Claude Code (tidak dibagikan)
 .claude/settings.local.json
+
+# Video & hasil olahan tiktok_potong
+hasil/
+*.mp4
+*.mov
+*.mkv
+*.webm
