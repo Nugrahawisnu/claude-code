@@ -23,7 +23,11 @@ _PENANDA_BLOKIR = (
 )
 
 
-class Diblokir(RuntimeError):
+class GagalAkses(RuntimeError):
+    """Halaman tidak bisa dibuka (jaringan, timeout, dsb.)."""
+
+
+class Diblokir(GagalAkses):
     """TikTok meminta verifikasi/CAPTCHA atau menolak akses."""
 
 
@@ -89,6 +93,14 @@ class PenjelajahTikTok:
         if self._pw:
             self._pw.stop()
 
+    def _buka(self, page, url: str) -> None:
+        from playwright.sync_api import Error as PlaywrightError
+
+        try:
+            page.goto(url, wait_until="domcontentloaded")
+        except PlaywrightError as e:
+            raise GagalAkses(f"tidak bisa membuka {url}: {str(e).splitlines()[0]}") from e
+
     def _istirahat(self) -> None:
         time.sleep(random.uniform(*self.jeda))
 
@@ -106,7 +118,7 @@ class PenjelajahTikTok:
         page.on("response", tangkap)
         try:
             url = URL_PROFIL.format(username=username)
-            page.goto(url, wait_until="domcontentloaded")
+            self._buka(page, url)
             page.wait_for_timeout(3000)
             html = page.content()
             cek_diblokir(html, page.url)
@@ -129,7 +141,7 @@ class PenjelajahTikTok:
         page = self._context.new_page()
         try:
             url = URL_PRODUK.format(product_id=product_id, region=self.region)
-            page.goto(url, wait_until="domcontentloaded")
+            self._buka(page, url)
             page.wait_for_timeout(2500)
             html = page.content()
             cek_diblokir(html, page.url)

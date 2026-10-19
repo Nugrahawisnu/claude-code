@@ -59,3 +59,41 @@ Buat `.claude/settings.local.json` (tidak ikut di-commit) untuk pengaturan priba
 ```
 
 Hapus lagi setelah selesai.
+
+## Tools riset TikTok (`riset-tiktok`)
+
+Riset akun TikTok publik beserta produk keranjang kuning (TikTok Shop) yang dipromosikan di videonya. Hasilnya berupa Excel (3 sheet: `profil`, `video`, `produk`) atau 3 file CSV.
+
+### Pasang (sekali saja)
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+playwright install chromium
+```
+
+Aktifkan `.venv` (`source .venv/bin/activate`) sebelum menjalankan tools atau `./scripts/cek.sh`.
+
+### Pakai
+
+```bash
+riset-tiktok @namaakun                        # → hasil_namaakun.xlsx
+riset-tiktok @namaakun --maks-video 60        # ambil lebih banyak video
+riset-tiktok @namaakun --csv --keluar data/   # 3 file CSV di folder data/
+riset-tiktok @namaakun --tampilkan-browser    # lihat browsernya bekerja
+```
+
+Opsi lain: `--maks-produk N` (default 50 halaman produk), `--region ID`, `--chromium PATH`.
+
+### Isi hasil
+
+- **profil**: nama, bio, verified, followers, following, likes, jumlah video.
+- **video**: link, deskripsi, tanggal, views, likes, komentar, share, simpan, `product_ids` keranjang kuning.
+- **produk**: nama, harga, harga coret, toko, terjual, rating, jumlah ulasan, `jumlah_video` dan `total_views_video` dari akun ini. Diurutkan dari views terbanyak.
+
+### Batasan
+
+- **Komisi afiliasi** biasanya tidak tampil di halaman publik (hanya ada di Affiliate Center yang butuh login), jadi kolom `komisi_persen` umumnya kosong.
+- Tools ini sengaja pelan (jeda 2–5 detik per halaman), tidak login, dan berhenti kalau TikTok menampilkan CAPTCHA. Kalau terblokir, tunggu dulu lalu coba lagi.
+- TikTok sering mengubah struktur halamannya. Kalau suatu kolom tiba-tiba kosong, yang perlu diperbaiki ada di `src/riset_tiktok/parser.py`. Simpan HTML halaman terbaru ke `tests/fixtures/`, lalu sesuaikan tesnya.
