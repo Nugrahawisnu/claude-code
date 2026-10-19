@@ -1,0 +1,65 @@
+{
+ "hasMore": true,
+ "cursor": "1700000000000",
+ "itemList": [
+  {
+   "id": "7300000000000000001",
+   "desc": "Serum ini bikin glowing #fyp",
+   "createTime": 1700000000,
+   "author": {
+    "uniqueId": "tokocontoh"
+   },
+   "stats": {
+    "playCount": 150000,
+    "diggCount": 9000,
+    "commentCount": 120,
+    "shareCount": 45,
+    "collectCount": 300
+   },
+   "anchors": [
+    {
+     "id": "1",
+     "type": 33,
+     "keyword": "Serum Wajah",
+     "extra": "[{\"product_id\": 1729384756, \"title\": \"Serum Wajah\"}]"
+    }
+   ]
+  },
+  {
+   "id": "7300000000000000002",
+   "desc": "Tips skincare",
+   "createTime": 1700100000,
+   "author": "tokocontoh",
+   "stats": {
+    "playCount": 5000,
+    "diggCount": 100,
+    "commentCount": 3,
+    "shareCount": 1,
+    "collectCount": 2
+   }
+  },
+  {
+   "id": "7300000000000000003",
+   "desc": "Paket hemat",
+   "createTime": 1700200000,
+   "author": {
+    "uniqueId": "tokocontoh"
+   },
+   "statsV2": {
+    "playCount": "20000",
+    "diggCount": "800",
+    "commentCount": "10",
+    "shareCount": "5",
+    "collectCount": "7"
+   },
+   "products": [
+    {
+     "productId": "1729384756"
+    },
+    {
+     "product_id": "1729000001"
+    }
+   ]
+  }
+ ]
+}
