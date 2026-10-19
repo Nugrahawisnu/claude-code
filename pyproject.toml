@@ -1,0 +1,33 @@
+[project]
+name = "riset-tiktok"
+version = "0.1.0"
+description = "Riset akun TikTok publik beserta produk keranjang kuning, ekspor ke CSV/Excel."
+requires-python = ">=3.10"
+dependencies = [
+  "playwright>=1.40",
+  "openpyxl>=3.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.5"]
+
+[project.scripts]
+riset-tiktok = "riset_tiktok.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]

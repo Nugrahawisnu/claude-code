@@ -12,3 +12,12 @@ target/
 
 # Setting pribadi Claude Code (tidak dibagikan)
 .claude/settings.local.json
+
+# Python
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Hasil riset
+hasil*.xlsx
+hasil*.csv
